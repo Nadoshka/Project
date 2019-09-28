@@ -9,7 +9,7 @@ const User = require('../../models/User');
 
 //@route  Post api/posts
 //@dec    Create a post => create the route to add a post
-//@access Public
+//@access Private
 router.post(
   '/',
   [
@@ -36,6 +36,8 @@ router.post(
         user: req.user.id,
       });
       const post = await newPost.save();
+
+      res.json(post);
     } catch (err) {
       console.error(err.message);
       res.status(500).send('Server Error');
@@ -66,7 +68,7 @@ router.get('/:id', auth, async (req, res) => {
     if (!post) {
       return res.status(404).json({ msg: 'Post not found!' });
     }
-    res.json(posts);
+    res.json(post);
   } catch (err) {
     console.error(err.message);
     if (err.kind === 'ObjectId') {
@@ -79,9 +81,9 @@ router.get('/:id', auth, async (req, res) => {
 //@route  DELETE api/posts/:id
 //@dec    Delete a post
 //@access Private
-router.delete('/', auth, async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {
   try {
-    const post = await Post.findById(req.param.id);
+    const post = await Post.findById(req.params.id);
 
     if (!post) {
       return res.status(404).json({ msg: 'Post not found!' });
@@ -97,6 +99,9 @@ router.delete('/', auth, async (req, res) => {
     res.json({ msg: 'Post removed!' });
   } catch (err) {
     console.error(err.message);
+    if (err.kind === 'ObjectId') {
+      return res.status(404).json({ msg: 'Post not found' });
+    }
     res.status(500).send('Server Error');
   }
 });
@@ -105,9 +110,9 @@ router.delete('/', auth, async (req, res) => {
 //@dec    like a post => update the post
 //@access Private
 
-router.put('/like/:id'.auth, async (req, res) => {
+router.put('/like/:id', auth, async (req, res) => {
   try {
-    const post = await Post.findById(req.param.id);
+    const post = await Post.findById(req.params.id);
 
     // check if the post has already been liked
     // Compare the current user to the user that's logged in
@@ -130,9 +135,9 @@ router.put('/like/:id'.auth, async (req, res) => {
 //@dec    unlike the post
 //@access Private
 
-router.put('/unlike/:id'.auth, async (req, res) => {
+router.put('/unlike/:id', auth, async (req, res) => {
   try {
-    const post = await Post.findById(req.param.id);
+    const post = await Post.findById(req.params.id);
 
     // check if the post has not been liked
     // Compare the current user to the user that's logged in

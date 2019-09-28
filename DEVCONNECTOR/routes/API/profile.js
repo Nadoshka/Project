@@ -5,17 +5,19 @@ const router = express.Router();
 const auth = require('../../middleware/auth');
 const { check, validationResult } = require('express-validator');
 
-const profile = require('../../models/Profile');
-const user = require('../../models/User');
+const Profile = require('../../models/Profile');
+const User = require('../../models/User');
+const Post = require('../../models/Post');
 
 //@route  Get api/profile/me
 //@dec    Get current users profile
 //@access Private
 router.get('/me', auth, async (req, res) => {
   try {
-    const profile = await profile
-      .findOne({ user: req.user.id })
-      .populate('user', ['name', 'avatar']);
+    const profile = await Profile.findOne({ user: req.user.id }).populate('user', [
+      'name',
+      'avatar',
+    ]);
 
     if (!profile) {
       return res.status(400).json({ msg: 'there is no profile for this user' });
@@ -50,7 +52,7 @@ router.post(
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(500).json({ errors: errors.array() });
+      return res.status(400).json({ errors: errors.array() });
     }
 
     //pull everything out from the body
@@ -80,33 +82,33 @@ router.post(
     if (status) profileData.status = status;
     if (githubusername) profileData.githubusername = githubusername;
     if (skills) {
-      skills.split(',').map(skill => skill.trim());
+      profileData.skills = skills.split(',').map(skill => skill.trim());
     }
 
     // Build social object
     profileData.social = {};
-    if (youtube) profileData.youtube = youtube;
-    if (twitter) profileData.twitter = twitter;
-    if (facebook) profileData.facebook = facebook;
-    if (linkedin) profileData.linkedin = linkedin;
-    if (instagram) profileData.instagram = instagram;
+    if (youtube) profileData.social.youtube = youtube;
+    if (twitter) profileData.social.twitter = twitter;
+    if (facebook) profileData.social.facebook = facebook;
+    if (linkedin) profileData.social.linkedin = linkedin;
+    if (instagram) profileData.social.instagram = instagram;
 
     //look for a profile by the user if it's found => update it and then send back the profile
-    let profile = await Profile.findOne({ user: req.user.id });
-
-    if (profile) {
-      // Update
-      profile = await Profile.findOneAndUpdate(
-        { user: req.user.id },
-        { $set: profileFields },
-        { new: true },
-      );
-      return res.json(profile);
-    }
-
-    // If the profile not found => Create, save and send the profile back
     try {
-      profile = new Profile(profileFields);
+      let profile = await Profile.findOne({ user: req.user.id });
+
+      if (profile) {
+        // Update
+        profile = await Profile.findOneAndUpdate(
+          { user: req.user.id },
+          { $set: profileData },
+          { new: true },
+        );
+
+        return res.json(profile);
+      }
+      // If the profile not found => Create, save and send the profile back
+      profile = new Profile(profileData);
 
       await profile.save();
       res.json(profile);
@@ -156,8 +158,8 @@ router.get('/user/:user_id', async (req, res) => {
 //@access Private
 router.delete('/', auth, async (req, res) => {
   try {
-    //@todo - remove users posts
-
+    // Remove users posts
+    await Post.deleteMany({ user: req.user.id });
     // Remove profile
     await Profile.findOneAndRemove({ user: req.user.id });
     // Remove user
@@ -217,6 +219,8 @@ router.put(
       profile.experience.unshift(newExp);
 
       await profile.save();
+
+      res.json(profile);
     } catch (err) {
       console.error(err.message);
       res.status(500).send('Server Error');
@@ -300,6 +304,7 @@ router.put(
       profile.education.unshift(newEdu);
 
       await profile.save();
+      res.json(profile);
     } catch (err) {
       console.error(err.message);
       res.status(500).send('Server Error');
@@ -312,15 +317,10 @@ router.put(
 //@access Private
 router.delete('/education/:edu_id', auth, async (req, res) => {
   try {
-    // getting the profile of the user the logged in user.
-    // getting the index
-    // then splicing it out
-    // receiving it or saving it
-    // then sending back a response.
     const profile = await Profile.findOne({ user: req.user.id });
 
     //Get remove index
-    const removeIndex = profile.experience.map(item => item.id).indexOf(req.params.edu_id);
+    const removeIndex = profile.education.map(item => item.id).indexOf(req.params.edu_id);
 
     profile.education.splice(removeIndex, 1);
 
@@ -333,7 +333,7 @@ router.delete('/education/:edu_id', auth, async (req, res) => {
   }
 });
 
-//@route  GET api/github/:username/:edu_id
+//@route  GET api/profile/github/:username/
 //@dec    Get user repos from Github
 //@access Public
 
@@ -360,7 +360,10 @@ router.get('/github/:username', (req, res) => {
 
       res.json(JSON.parse(body));
     });
-  } catch (error) {}
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
 });
 
 module.exports = router;
