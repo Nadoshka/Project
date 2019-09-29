@@ -27,7 +27,7 @@ const Register = ({ setAlert, register, isAuthenticated }) => {
     e.preventDefault();
     // we can access the state from anywhere, we do not have to pass it in as (const password = this.state) because it's available from const { name, email, password, password2 } = formData;
     if (password !== password2) {
-      setAlert('passwords do not match!, danger');
+      setAlert('passwords do not match!', 'danger');
     } else {
       register({ name, email, password });
       // an example of making a request post api/user to the backend
