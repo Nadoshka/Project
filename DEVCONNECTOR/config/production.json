@@ -1,6 +1,0 @@
-{
-  "mongoURI": "mongodb+srv://nadin123:nadin123@devconnector-zfoz6.mongodb.net/test?retryWrites=true&w=majority",
-  "jwtSecret": "mysecrettoken",
-  "githubClientId": "34a82d0163d8362f381c",
-  "githubSecret": "49f86cb1930ecaad1a5a065ac0d1fa4a7af9904c"
-}
