@@ -11,7 +11,8 @@ const User = require('../../models/User');
 
 //@route  POST api/users
 //@dec    Register User
-//@access Public
+//@access Public -> we do not need a token
+
 router.post(
   '/',
   [
@@ -63,8 +64,12 @@ router.post(
           id: user.id,
         },
       };
-
-      jwt.sign(payload, config.get('jwtSecret'), { expiresIn: 630000 }, (err, token) => {
+      /* The reason of returning the Jwt:
+      ** in the frontEnd when a user register 
+      ** we want to get logged in right away 
+      ** and to be logged in you have to have that token.
+      */
+      jwt.sign(payload, config.get('jwtSecret'), { expiresIn: 360000 }, (err, token) => {
         if (err) throw err;
         res.json({ token });
       });

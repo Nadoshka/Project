@@ -8,7 +8,7 @@ const app = express();
 connectDB();
 
 //Init Middleware
-app.use(express.json({ extends: false }));
+app.use(express.json({ extends: false })); //->it allow us to get the data in req.body.
 
 //Define routes
 app.use('/api/users', require('./routes/api/users'));

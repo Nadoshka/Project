@@ -11,7 +11,7 @@ const Post = require('../../models/Post');
 
 //@route  Get api/profile/me
 //@dec    Get current users profile
-//@access Private
+//@access Private -> we need to be authenticated.-> send along a token to that route in order for it to work.
 router.get('/me', auth, async (req, res) => {
   try {
     const profile = await Profile.findOne({ user: req.user.id }).populate('user', [
@@ -28,7 +28,7 @@ router.get('/me', auth, async (req, res) => {
     console.error(err.message);
     res.status(500).send('server Error');
   }
-  res.send('Profile route');
+  res.send('Profile route')
 });
 
 //@route  Post api/profile
